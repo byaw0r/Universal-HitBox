@@ -1,4 +1,4 @@
--- BYW SCRIPT
+- BYW SCRIPT
 local hitboxEnabled = false
 local espEnabled = true
 
@@ -6,6 +6,8 @@ local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "HitboxMenu"
 screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 screenGui.ResetOnSpawn = false
+screenGui.DisplayOrder = 999999
+screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
 local hitboxBtn = Instance.new("TextButton")
 hitboxBtn.Name = "HitboxBtn"
@@ -19,6 +21,7 @@ hitboxBtn.Font = Enum.Font.GothamBold
 hitboxBtn.BorderSizePixel = 0
 hitboxBtn.Active = true
 hitboxBtn.Draggable = true
+hitboxBtn.ZIndex = 999999
 hitboxBtn.Parent = screenGui
 
 local UICorner = Instance.new("UICorner")
@@ -35,6 +38,7 @@ toggleInputBtn.Text = "S"
 toggleInputBtn.TextSize = 20
 toggleInputBtn.Font = Enum.Font.GothamBold
 toggleInputBtn.BorderSizePixel = 0
+toggleInputBtn.ZIndex = 999999
 toggleInputBtn.Parent = screenGui
 
 local toggleCorner = Instance.new("UICorner")
@@ -54,6 +58,7 @@ sizeInput.Font = Enum.Font.GothamBold
 sizeInput.BorderSizePixel = 2
 sizeInput.BorderColor3 = Color3.fromRGB(255, 255, 255)
 sizeInput.Visible = false
+sizeInput.ZIndex = 999999
 sizeInput.Parent = screenGui
 
 local inputCorner = Instance.new("UICorner")
@@ -73,6 +78,15 @@ local function updateHitboxSize()
         _G.Size = newSize
     else
         sizeInput.Text = tostring(_G.Size)
+    end
+end
+
+local function changeSizeByAmount(amount)
+    local currentSize = tonumber(sizeInput.Text) or _G.Size
+    local newSize = currentSize + amount
+    if newSize > 0 then
+        sizeInput.Text = tostring(newSize)
+        _G.Size = newSize
     end
 end
 
@@ -395,6 +409,12 @@ game:GetService("UserInputService").InputBegan:Connect(function(input, gameProce
     
     if input.KeyCode == Enum.KeyCode.H then
         toggleHitbox()
+    elseif input.KeyCode == Enum.KeyCode.J then
+        toggleSizeInput()
+    elseif input.KeyCode == Enum.KeyCode.Equals then
+        changeSizeByAmount(5)
+    elseif input.KeyCode == Enum.KeyCode.Minus then
+        changeSizeByAmount(-5)
     end
 end)
 
