@@ -14,7 +14,7 @@ hitboxBtn.Position = UDim2.new(0, 10, 0, 10)
 hitboxBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 hitboxBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
 hitboxBtn.Text = "B"
-hitboxBtn.TextSize = 28 -- Текст 28
+hitboxBtn.TextSize = 28
 hitboxBtn.Font = Enum.Font.GothamBold
 hitboxBtn.BorderSizePixel = 0
 hitboxBtn.Active = true
@@ -333,8 +333,6 @@ local function handlePlayerDeath()
         character:WaitForChild("Humanoid")
         
         character.Humanoid.Died:Connect(function()
-            -- Убрана автоматическая деактивация хитбокса при смерти
-            -- Хитбокс остается включенным пока пользователь сам не выключит
             print("Player died, but hitbox remains active")
         end)
     end)
@@ -343,8 +341,6 @@ local function handlePlayerDeath()
         local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
         if humanoid then
             humanoid.Died:Connect(function()
-                -- Убрана автоматическая деактивация хитбокса при смерти
-                -- Хитбокс остается включенным пока пользователь сам не выключит
                 print("Player died, but hitbox remains active")
             end)
         end
