@@ -1,6 +1,6 @@
 -- BYW SCRIPT
 local hitboxEnabled = false
-local espEnabled = false
+local espEnabled = true
 
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "HitboxMenu"
@@ -61,7 +61,7 @@ inputCorner.CornerRadius = UDim.new(0, 8)
 inputCorner.Parent = sizeInput
 
 _G.Size = 20
-_G.Disabled = true
+_G.Disabled = false
 
 local espConnection
 local originalSizes = {}
@@ -333,7 +333,6 @@ local function handlePlayerDeath()
         character:WaitForChild("Humanoid")
         
         character.Humanoid.Died:Connect(function()
-            print("Player died, but hitbox remains active")
         end)
     end)
     
@@ -341,7 +340,6 @@ local function handlePlayerDeath()
         local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
         if humanoid then
             humanoid.Died:Connect(function()
-                print("Player died, but hitbox remains active")
             end)
         end
     end
@@ -401,7 +399,6 @@ game:GetService("UserInputService").InputBegan:Connect(function(input, gameProce
 end)
 
 updateButtonPositions()
-startESP()
 handlePlayerDeath()
 
 print("BYW SCRIPT loaded!")
