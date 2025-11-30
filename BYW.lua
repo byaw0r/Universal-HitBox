@@ -1,4 +1,4 @@
-- BYW SCRIPT
+-- BYW SCRIPT
 local hitboxEnabled = false
 local espEnabled = true
 
@@ -176,8 +176,8 @@ local function updateESP()
                         end
                         
                         rootPart.Size = Vector3.new(_G.Size, _G.Size, _G.Size)
-                        rootPart.Transparency = 0.7
-                        rootPart.BrickColor = BrickColor.new("Really blue")
+                        rootPart.Transparency = 0.9
+                        rootPart.BrickColor = BrickColor.new("Really black")
                         rootPart.Material = "Neon"
                         rootPart.CanCollide = false
                     end
