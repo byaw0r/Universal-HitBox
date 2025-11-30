@@ -1,4 +1,3 @@
--- BYW SCRIPT
 local hitboxEnabled = false
 local espEnabled = true
 
@@ -72,6 +71,19 @@ local espConnection
 local originalSizes = {}
 local hitboxZones = {}
 
+local function isTeammate(player)
+    local localPlayer = game.Players.LocalPlayer
+    if game:GetService("Players").LocalPlayer.Neutral then
+        return false
+    end
+    
+    if player.Team and localPlayer.Team then
+        return player.Team == localPlayer.Team
+    end
+    
+    return false
+end
+
 local function updateHitboxSize()
     local newSize = tonumber(sizeInput.Text)
     if newSize and newSize > 0 then
@@ -104,6 +116,29 @@ local function updateButtonPositions()
     end
 end
 
+local function isValidNPC(model)
+    if not model:IsA("Model") then
+        return false
+    end
+    
+    local humanoid = model:FindFirstChildOfClass("Humanoid")
+    local rootPart = model:FindFirstChild("HumanoidRootPart") or model:FindFirstChild("Torso") or model:FindFirstChild("UpperTorso")
+    
+    if not humanoid or not rootPart then
+        return false
+    end
+    
+    if humanoid.Health <= 0 then
+        return false
+    end
+    
+    if model:FindFirstChild("Head") then
+        return true
+    end
+    
+    return true
+end
+
 local function getRootPart(character)
     return character:FindFirstChild("HumanoidRootPart") or character:FindFirstChild("Torso") or character:FindFirstChild("UpperTorso")
 end
@@ -111,10 +146,37 @@ end
 local function updateESP()
     if _G.Disabled then
         for i,v in next, game:GetService('Players'):GetPlayers() do
-            if v.Name ~= game:GetService('Players').LocalPlayer.Name and v.Character then
+            if v.Name ~= game:GetService('Players').LocalPlayer.Name and v.Character and not isTeammate(v) then
                 pcall(function()
                     local rootPart = getRootPart(v.Character)
                     if rootPart and v.Character:FindFirstChildOfClass("Humanoid") and v.Character:FindFirstChildOfClass("Humanoid").Health > 0 then
+                        if not originalSizes[v.Name] then
+                            originalSizes[v.Name] = {
+                                Size = rootPart.Size,
+                                Transparency = rootPart.Transparency,
+                                BrickColor = rootPart.BrickColor,
+                                Material = rootPart.Material,
+                                CanCollide = rootPart.CanCollide
+                            }
+                        end
+                        
+                        rootPart.Size = Vector3.new(_G.Size, _G.Size, _G.Size)
+                        rootPart.Transparency = 0.9
+                        rootPart.BrickColor = BrickColor.new("Really black")
+                        rootPart.Material = "Neon"
+                        rootPart.CanCollide = false
+                    end
+                end)
+            end
+        end
+        
+        for i, v in next, workspace:GetChildren() do
+            if isValidNPC(v) and v ~= game.Players.LocalPlayer.Character then
+                pcall(function()
+                    local rootPart = getRootPart(v)
+                    local humanoid = v:FindFirstChildOfClass("Humanoid")
+                    
+                    if rootPart and humanoid and humanoid.Health > 0 then
                         if not originalSizes[v.Name] then
                             originalSizes[v.Name] = {
                                 Size = rootPart.Size,
@@ -154,6 +216,22 @@ local function restoreNormalSize()
         end
     end
     
+    for i, v in next, workspace:GetChildren() do
+        if isValidNPC(v) then
+            pcall(function()
+                local rootPart = getRootPart(v)
+                if rootPart and originalSizes[v.Name] then
+                    local original = originalSizes[v.Name]
+                    rootPart.Size = original.Size
+                    rootPart.Transparency = original.Transparency
+                    rootPart.BrickColor = original.BrickColor
+                    rootPart.Material = original.Material
+                    rootPart.CanCollide = original.CanCollide
+                end
+            end)
+        end
+    end
+    
     originalSizes = {}
 end
 
@@ -165,7 +243,7 @@ local function expandHitboxArea()
         
         if localRoot then
             for i, v in next, game:GetService('Players'):GetPlayers() do
-                if v.Name ~= localPlayer.Name and v.Character then
+                if v.Name ~= localPlayer.Name and v.Character and not isTeammate(v) then
                     pcall(function()
                         local targetRoot = getRootPart(v.Character)
                         local humanoid = v.Character:FindFirstChildOfClass("Humanoid")
@@ -181,17 +259,48 @@ local function expandHitboxArea()
                                     hitboxZone.Size = Vector3.new(_G.Size * 2, _G.Size * 2, _G.Size * 2)
                                     hitboxZone.Transparency = 1
                                     hitboxZone.CanCollide = false
-                                    hitboxZone.Anchored = false
+                                    hitboxZone.Anchored = true
                                     hitboxZone.Parent = targetRoot
                                     hitboxZones[v.Name] = hitboxZone
-                                    
-                                    -- Добавляем WeldConstraint чтобы часть двигалась с персонажем
-                                    local weld = Instance.new("WeldConstraint")
-                                    weld.Part0 = targetRoot
-                                    weld.Part1 = hitboxZone
-                                    weld.Parent = hitboxZone
                                 end
                                 
+                                hitboxZone.Position = targetRoot.Position
+                                hitboxZone.Size = Vector3.new(_G.Size * 2, _G.Size * 2, _G.Size * 2)
+                            else
+                                local hitboxZone = targetRoot:FindFirstChild("HitboxZone")
+                                if hitboxZone then
+                                    hitboxZone:Destroy()
+                                    hitboxZones[v.Name] = nil
+                                end
+                            end
+                        end
+                    end)
+                end
+            end
+            
+            for i, v in next, workspace:GetChildren() do
+                if isValidNPC(v) and v ~= localChar then
+                    pcall(function()
+                        local targetRoot = getRootPart(v)
+                        local humanoid = v:FindFirstChildOfClass("Humanoid")
+                        
+                        if targetRoot and humanoid and humanoid.Health > 0 then
+                            local distance = (localRoot.Position - targetRoot.Position).Magnitude
+                            
+                            if distance <= _G.Size then
+                                local hitboxZone = targetRoot:FindFirstChild("HitboxZone")
+                                if not hitboxZone then
+                                    hitboxZone = Instance.new("Part")
+                                    hitboxZone.Name = "HitboxZone"
+                                    hitboxZone.Size = Vector3.new(_G.Size * 2, _G.Size * 2, _G.Size * 2)
+                                    hitboxZone.Transparency = 1
+                                    hitboxZone.CanCollide = false
+                                    hitboxZone.Anchored = true
+                                    hitboxZone.Parent = targetRoot
+                                    hitboxZones[v.Name] = hitboxZone
+                                end
+                                
+                                hitboxZone.Position = targetRoot.Position
                                 hitboxZone.Size = Vector3.new(_G.Size * 2, _G.Size * 2, _G.Size * 2)
                             else
                                 local hitboxZone = targetRoot:FindFirstChild("HitboxZone")
@@ -226,6 +335,20 @@ local function expandHitboxArea()
                 end)
             end
         end
+        
+        for i, v in next, workspace:GetChildren() do
+            if isValidNPC(v) then
+                pcall(function()
+                    local targetRoot = getRootPart(v)
+                    if targetRoot then
+                        local hitboxZone = targetRoot:FindFirstChild("HitboxZone")
+                        if hitboxZone then
+                            hitboxZone:Destroy()
+                        end
+                    end
+                end)
+            end
+        end
     end
 end
 
@@ -236,10 +359,6 @@ local function handlePlayerDeath()
         character:WaitForChild("Humanoid")
         
         character.Humanoid.Died:Connect(function()
-            -- При смерти отключаем хитбокс
-            if hitboxEnabled then
-                toggleHitbox()
-            end
         end)
     end)
     
@@ -247,10 +366,6 @@ local function handlePlayerDeath()
         local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
         if humanoid then
             humanoid.Died:Connect(function()
-                -- При смерти отключаем хитбокс
-                if hitboxEnabled then
-                    toggleHitbox()
-                end
             end)
         end
     end
@@ -262,13 +377,6 @@ local function startESP()
             updateESP()
             expandHitboxArea()
         end)
-    end
-end
-
-local function stopESP()
-    if espConnection then
-        espConnection:Disconnect()
-        espConnection = nil
     end
 end
 
@@ -287,7 +395,6 @@ local function toggleHitbox()
         _G.Disabled = false
         restoreNormalSize()
         expandHitboxArea()
-        stopESP()
     end
 end
 
@@ -320,14 +427,6 @@ game:GetService("UserInputService").InputBegan:Connect(function(input, gameProce
         changeSizeByAmount(5)
     elseif input.KeyCode == Enum.KeyCode.Minus then
         changeSizeByAmount(-5)
-    end
-end)
-
--- Очистка при выходе из игры
-game.Players.LocalPlayer.CharacterRemoving:Connect(function()
-    if hitboxEnabled then
-        restoreNormalSize()
-        expandHitboxArea()
     end
 end)
 
