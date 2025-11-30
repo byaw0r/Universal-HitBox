@@ -1,6 +1,6 @@
 -- BYW SCRIPT
 local hitboxEnabled = false
-local espEnabled = true
+local espEnabled = false
 
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "HitboxMenu"
